@@ -1,4 +1,3 @@
-
 #include <string>
 #include <vector>
 
@@ -34,12 +33,26 @@ public:
 
     bool matchesFilters(string& loc, double minPrice, double maxPrice, PropertyType type); 
 
-    // Getters
-    PropertyType getType();
-    int getSellerID();
+
+    
+    int getPropertyID();
+    string getName();
+    string getLocation();
     double getPrice();
     double getSize();
-    void getfeatures();
+    PropertyType getType();
+    vector<string> getFeatures();
+    int getSellerID();
+
+
+    
+    void setName(string& newName);
+    void setLocation(string& newLocation);
+    void setPrice(double newPrice);
+    void setSize(double newSize);
+    void setType(PropertyType newType);
+    void setFeatures(vector<string>& newFeatures);
+    void setSellerID(int newSellerID);
 };
 
 

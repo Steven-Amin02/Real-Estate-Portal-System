@@ -45,19 +45,41 @@ bool Property::matchesFilters(string& loc, double minPrice, double maxPrice, Pro
 }
 
 // Getters 
-PropertyType Property::getType() { return propertyType; }
-int Property::getSellerID() { return sellerID; }
+int Property::getPropertyID() { return propertyID; }
+
+string Property::getName() { return name; }
+
+string Property::getLocation() { return location; }
+
 double Property::getPrice() { return price; }
+
 double Property::getSize() { return size; }
 
-void Property::getfeatures()
-{
-    
-    for (auto& feature : features) {
-        cout << feature << ", ";
+PropertyType Property::getType() { return propertyType; }
+
+vector<string> Property::getFeatures() { return features; }
+
+int Property::getSellerID() { return sellerID; }
+
+void Property::setName(string& newName) { name = newName; }
+
+void Property::setLocation(string& newLocation) { location = newLocation; }
+
+void Property::setPrice(double newPrice) {
+    if (newPrice < 0 || newPrice > 1,000,000,00) {
+        throw invalid_argument("Price must be between 0 and 1,000,000,00.");
     }
-    
+    price = newPrice;
 }
+void Property::setSize(double newSize) { size = newSize; }
+
+void Property::setType(PropertyType newType) { propertyType = newType; }
+
+void Property::setFeatures(vector<string>& newFeatures) { features = newFeatures; }
+
+void Property::setSellerID(int newSellerID) { sellerID = newSellerID; }
+
+
 
 
 

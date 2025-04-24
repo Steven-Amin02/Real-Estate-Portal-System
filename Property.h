@@ -1,6 +1,7 @@
-#include <string>
-#include <vector>
+#ifndef PROPERTY
+#define PROPERTY
 
+#include <string>
 using namespace std;
 
 enum class PropertyType {
@@ -12,48 +13,46 @@ enum class PropertyType {
     Unknown
 };
 
-string propertyTypeToString(PropertyType type);
+string propertyTypeToString(PropertyType);
 
-class Property {
+class PropertyLocation {
 private:
-    int propertyID;
-    string name;
-    string location;
-    double price;
-    double size;
-    PropertyType propertyType;
-    vector<string> features;
-    int sellerID;
-
+    static const char* governorates[3], * cities[9], * streets[27];
 public:
-    Property(int id, string& name, string& location, double price,
-        double size, PropertyType type, vector<string>& features, int sellerID);
+    static const char* getCities(int);
+    static const char* getStreets(int);
+    const char* governorate, * city, * street;
+    PropertyLocation(int, const char*, const char*);
+};
 
-    void displayInfo(); 
+std::ostream& operator<<(std::ostream&, PropertyLocation&);
 
-    bool matchesFilters(string& loc, double minPrice, double maxPrice, PropertyType type); 
-
-
-    
+class PropertyListing {
+private:
+    static int maxPropertyID;
+    int propertyID;
+    double price, size;
+    PropertyType propertyType;
+    PropertyLocation location;
+    string name, features, userHandle;
+public:
+    PropertyListing(string& name, PropertyLocation location, double price, double size, PropertyType type, string& features, string userHandle);
+    void displayInfo();
+    bool matchesFilters(string& loc, double minPrice, double maxPrice, PropertyType type);
     int getPropertyID();
     string getName();
-    string getLocation();
+    PropertyLocation getLocation();
     double getPrice();
     double getSize();
     PropertyType getType();
-    vector<string> getFeatures();
-    int getSellerID();
-
-
-    
+    string getFeatures();
+    string getUserHandle();
     void setName(string& newName);
-    void setLocation(string& newLocation);
+    void setLocation(PropertyLocation newLocation);
     void setPrice(double newPrice);
     void setSize(double newSize);
     void setType(PropertyType newType);
-    void setFeatures(vector<string>& newFeatures);
-    void setSellerID(int newSellerID);
+    void setFeatures(string& newFeatures);
 };
 
-
-
+#endif

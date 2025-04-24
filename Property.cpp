@@ -3,6 +3,71 @@
 
 using namespace std;
 
+int PropertyListing::maxPropertyID = 0;
+
+const char* PropertyLocation::getCities(int index) {
+    return PropertyLocation::cities[index];
+}
+
+const char* PropertyLocation::getStreets(int index) {
+    return PropertyLocation::streets[index];
+}
+
+const char* PropertyLocation::governorates[3]({
+    "Cairo",
+    "Alexandria",
+    "Giza"
+    });
+
+const char* PropertyLocation::cities[9]({
+    "Nasr City",
+    "Heliopolis",
+    "Zamalek",
+    "Roushdy",
+    "Smouha",
+    "Mandara",
+    "Dokki",
+    "Mohandessin",
+    "Faisal"
+    });
+
+const char* PropertyLocation::streets[27]({
+    "Abbas El Akkad Street",
+    "Makram Ebeid Street",
+    "Mostafa_El_Nahas_Street",
+    "Al Mirghani Street",
+    "Baghdad Street",
+    "Orouba Street",
+    "Brazil Street",
+    "Mohamed Mazhar Street",
+    "26th of July Street",
+    "Mohamed Ahmed Street",
+    "Syria Street",
+    "El Geish Road",
+    "Victor Emmanue Street",
+    "Fawzi Moaz Street",
+    "Transport Engineering Road",
+    "Tahrir Street",
+    "Mossadak Street",
+    "El Batal Ahmed Abdel Aziz Street",
+    "Syria Street",
+    "Shehab Street",
+    "Gameat El_Dowal El_Arabiya Street",
+    "Faisal Street",
+    "Talbeya Street",
+    "Khatem El Morsaleen Street"
+    });
+
+PropertyLocation::PropertyLocation(int governorateIndex, const char* city, const char* street)
+    : governorate(this->governorates[governorateIndex]), city(city), street(street)
+{
+}
+
+std::ostream& operator<<(std::ostream& os, PropertyLocation& location) {
+    os << "Govrnorate: " << location.governorate << "\nCity: " << location.city << "\nStreet: " << location.street << '\n';
+    return os;
+}
+
 string propertyTypeToString(PropertyType type) {
     switch (type) {
     case PropertyType::Apartment: return "Apartment";
@@ -14,72 +79,62 @@ string propertyTypeToString(PropertyType type) {
     }
 }
 
-Property::Property(int id, string& name, string& location, double price,
-    double size, PropertyType type, vector<string>& features, int sellerID)
-    : propertyID(id), name(name), location(location), price(price), size(size),
-    propertyType(type), features(features), sellerID(sellerID) {
+PropertyListing::PropertyListing(string& name, PropertyLocation location, double price,
+    double size, PropertyType type, string& features, string userHandle)
+    : propertyID(PropertyListing::maxPropertyID++), name(name), location(location), price(price), size(size),
+    propertyType(type), features(features), userHandle(userHandle) {
 }
 
-void Property::displayInfo() {
+void PropertyListing::displayInfo() {
     cout << "Property ID: " << propertyID << "\n"
         << "Name: " << name << "\n"
         << "Location: " << location << "\n"
         << "Price: $" << price << "\n"
         << "Size: " << size << " sqm\n"
         << "Type: " << propertyTypeToString(propertyType) << "\n"
-        << "Features: ";
-    for (auto& feature : features) {
-        cout << feature << ", ";
-    }
-    cout << "\nSeller ID: " << sellerID << "\n";
+        << "Features: " << features;
+    cout << "\nUser Handle: " << userHandle << "\n";
 }
 
-bool Property::matchesFilters(string& loc, double minPrice, double maxPrice, PropertyType type) {
-    if (!loc.empty() && location != loc)
-        return false;
-    if (price < minPrice || price > maxPrice)
-        return false;
-    if (type != PropertyType::Unknown && propertyType != type)
-        return false;
-    return true;
-}
+//bool PropertyListing::matchesFilters(string& loc, double minPrice, double maxPrice, PropertyType type) {
+//    if (!loc.empty() && location != loc)
+//        return false;
+//    if (price < minPrice || price > maxPrice)
+//        return false;
+//    if (type != PropertyType::Unknown && propertyType != type)
+//        return false;
+//    return true;
+//}
 
 // Getters 
-int Property::getPropertyID() { return propertyID; }
+int PropertyListing::getPropertyID() { return propertyID; }
 
-string Property::getName() { return name; }
+string PropertyListing::getName() { return name; }
 
-string Property::getLocation() { return location; }
+PropertyLocation PropertyListing::getLocation() { return location; }
 
-double Property::getPrice() { return price; }
+double PropertyListing::getPrice() { return price; }
 
-double Property::getSize() { return size; }
+double PropertyListing::getSize() { return size; }
 
-PropertyType Property::getType() { return propertyType; }
+PropertyType PropertyListing::getType() { return propertyType; }
 
-vector<string> Property::getFeatures() { return features; }
+string PropertyListing::getFeatures() { return features; }
 
-int Property::getSellerID() { return sellerID; }
+string PropertyListing::getUserHandle() { return userHandle; }
 
-void Property::setName(string& newName) { name = newName; }
+void PropertyListing::setName(string& newName) { name = newName; }
 
-void Property::setLocation(string& newLocation) { location = newLocation; }
+void PropertyListing::setLocation(PropertyLocation newLocation) { location = newLocation; }
 
-void Property::setPrice(double newPrice) {
-    if (newPrice < 0 || newPrice > 1,000,000,00) {
+void PropertyListing::setPrice(double newPrice) {
+    if (newPrice < 0 || newPrice > 1000000, 00) {
         throw invalid_argument("Price must be between 0 and 1,000,000,00.");
     }
     price = newPrice;
 }
-void Property::setSize(double newSize) { size = newSize; }
+void PropertyListing::setSize(double newSize) { size = newSize; }
 
-void Property::setType(PropertyType newType) { propertyType = newType; }
+void PropertyListing::setType(PropertyType newType) { propertyType = newType; }
 
-void Property::setFeatures(vector<string>& newFeatures) { features = newFeatures; }
-
-void Property::setSellerID(int newSellerID) { sellerID = newSellerID; }
-
-
-
-
-
+void PropertyListing::setFeatures(string& newFeatures) { features = newFeatures; }

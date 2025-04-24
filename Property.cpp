@@ -128,7 +128,7 @@ void PropertyListing::setName(string& newName) { name = newName; }
 void PropertyListing::setLocation(PropertyLocation newLocation) { location = newLocation; }
 
 void PropertyListing::setPrice(double newPrice) {
-    if (newPrice < 0 || newPrice > 1000000, 00) {
+    if (newPrice < 0 || newPrice > 100000000) {
         throw invalid_argument("Price must be between 0 and 1,000,000,00.");
     }
     price = newPrice;

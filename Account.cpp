@@ -3,31 +3,26 @@
 #include "Account.h"
 #include "Exception.h"
 #include "Property.h"
+#include "SelctorInputValidator.h"
 
 BaseAccount::BaseAccount(AccountType type, std::string firstName, std::string lastName, std::string userHandle, std::string password)
-: type(type), firstName(firstName), lastName(lastName), userHandle(userHandle), password(password) {}
+	: type(type), firstName(firstName), lastName(lastName), userHandle(userHandle), password(password) {
+}
 
 AdminAccount::AdminAccount(std::string firstName, std::string lastName, std::string userHandle, std::string password)
 	: BaseAccount(AccountType::AdminAccount, firstName, lastName, userHandle, password), authorization(false) {
 }
 
 UserAccount::UserAccount(std::string firstName, std::string lastName, std::string userHandle, std::string password)
-: BaseAccount(AccountType::UserAccount, firstName, lastName, userHandle, password) {}
+	: BaseAccount(AccountType::UserAccount, firstName, lastName, userHandle, password) {
+}
 
 void BaseAccount::createAccount() {
 	int accountTypeChoice;
 	std::string firstName, lastName;
 	std::string userHandle, password;
 	std::cout << "Press:\n(1) to create an admin account.\n(2) to create a user account.\n";
-	try {
-		std::cin >> accountTypeChoice;
-		if (accountTypeChoice < 1 || accountTypeChoice > 2)
-			throw InvalidInputException();
-	}
-	catch (InvalidInputException e) {
-		std::cout << e.getErrorMessage();
-		BaseAccount::createAccount();
-	}
+	InputValidator::inputSelector(accountTypeChoice, 2);
 	std::cout << "Enter First Name: ";
 	std::cin >> firstName;
 	std::cout << "Enter Last Name: ";
@@ -39,7 +34,8 @@ void BaseAccount::createAccount() {
 	BaseAccount* newAcc;
 	if (accountTypeChoice == 1) {
 		newAcc = new AdminAccount(firstName, lastName, userHandle, password);
-	} else {
+	}
+	else {
 		newAcc = new UserAccount(firstName, lastName, userHandle, password);
 	}
 	// go back to main menu
@@ -60,14 +56,17 @@ void BaseAccount::logIn(std::unordered_map<std::string, BaseAccount*>* accountsS
 					;
 				else
 					std::cout << "Your account awaits authorization!\n";
-			} else {
+			}
+			else {
 				// display user menu
 			}
-		} else {
+		}
+		else {
 			std::cout << "Incorrect credential combiination, retry!\n";
 			BaseAccount::logIn(accountsStore);
 		}
-	} catch (std::out_of_range e) {
+	}
+	catch (std::out_of_range e) {
 		std::cout << "Account does not exist, retry!\n";
 		BaseAccount::logIn(accountsStore);
 	}
@@ -77,15 +76,7 @@ void UserAccount::updateAccountInfo() {
 	int userSelector;
 	std::string userInput;
 	std::cout << "Press:\n(1) to update first name.\n(2) to update last name.\n(3) to update password.\n";
-	try {
-		std::cin >> userSelector;
-		if (userSelector < 1 || userSelector > 3)
-			throw InvalidInputException();
-	}
-	catch (InvalidInputException e) {
-		std::cout << e.getErrorMessage();
-		this->updateAccountInfo();
-	}
+	InputValidator::inputSelector(userSelector);
 	std::cout << "Input: ";
 	std::cin >> userInput;
 	switch (userSelector) {
@@ -101,31 +92,46 @@ void UserAccount::updateAccountInfo() {
 	}
 }
 
-void UserAccount::submitPropertyListing() {
-	int propertyTypeChoice;
-	std::string name, features, location;
+void UserAccount::submitPropertyListing(std::unordered_map<PropertyType, std::unordered_map<PropertyLocation, PropertyListing[]>*>* litsingsStore) {
+	int propertyTypeChoice, governorateChoice, cityChoice, streetChoice;
+	std::string name, features;
 	double price, size;
 	std::cout << "Enter Property Name: ";
 	std::cin >> name;
 	std::cout << "Enter Property Size: ";
 	std::cin >> size;
-	std::cout << "Enter Property Features: ";
-	std::cin >> features;
-	std::cout << "Enter Property Location: ";
-	std::cin >> location;
-	std::cout << "Enter Property Price: ";
-	std::cin >> price;
 	std::cout << "Pick Property Type:\n";
 	std::cout << "Press:\n(1) for Apartment.\n(2) for Villa.\n(3) for Studio.\n(4) for Townhouse.\n(5) for Land.\n(6) for Unknown.\n";
+	InputValidator::inputSelector(propertyTypeChoice, 6);
+	std::cout << "Enter Property Features: ";
+	std::cin >> features;
+	std::cout << "Pick Property Location: ";
+	std::cout << "Pick Governorate:\nPress:\n(1) for Cairo.\n(2) for Alexandria.\n(3) for Giza.\n";
+	InputValidator::inputSelector(governorateChoice);
+	std::cout << "Pick City:\nPress:\n";
+	const char* cities(PropertyLocation::getCities(3 * (governorateChoice - 1)));
+	for (int i(0); i < 3; ++i)
+		std::cout << '(' << (i + 1) << ") for " << cities[i] << '.' << '\n';
+	InputValidator::inputSelector(cityChoice);
+	const char* streets(PropertyLocation::getStreets(3 * (cityChoice - 1)));
+	for (int i(0); i < 3; ++i)
+		std::cout << '(' << (i + 1) << ") for " << streets[i] << '.' << '\n';
+	InputValidator::inputSelector(streetChoice);
+	PropertyLocation location(governorateChoice - 1, &(cities[cityChoice - 1]), &(streets[streetChoice - 1]));
+	std::cout << "Enter Property Price: ";
+	std::cin >> price;
 	try {
-		std::cin >> propertyTypeChoice;
-		if (propertyTypeChoice < 1 || propertyTypeChoice > 6)
-			throw InvalidInputException();
+		std::unordered_map<PropertyLocation, PropertyListing[]>* propertyByType = litsingsStore->at((PropertyType)(propertyTypeChoice - 1));
+		try {
+			propertyByType->at(location)[5];
+		}
+		catch (std::out_of_range e) {
+			// propertyByType->insert();
+		}
 	}
-	catch (InvalidInputException e) {
-		std::cout << e.getErrorMessage();
-		this->submitPropertyListing();
+	catch (std::out_of_range e) {
+		// litsingsStore->insert();
 	}
-	Property newProperty(name, location, price, size, (PropertyType) (propertyTypeChoice - 1), features, this->userHandle);
+	PropertyListing newProperty(name, location, price, size, (PropertyType)(propertyTypeChoice - 1), features, this->userHandle);
 	// store property in appropriate data structure here
 }

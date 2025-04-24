@@ -29,7 +29,7 @@ public:
 
 class UserAccount : public BaseAccount {
 public:
-	void submitPropertyListing();
+	void submitPropertyListing(std::unordered_map<PropertyType, std::unordered_map<PropertyLocation, PropertyListing[]>*>*);
 	void updateAccountInfo();
 	UserAccount(std::string, std::string, std::string, std::string);
 };

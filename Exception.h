@@ -1,15 +1,15 @@
+#pragma once
 #ifndef EXCEPTION
 #define EXCEPTION
-
 #include <string>
-
+using namespace std;
 class InvalidInputException {
 private:
-	std::string errorMessage;
+	string errorMessage;
 public:
 	InvalidInputException();
 	InvalidInputException(const char*);
-	std::string getErrorMessage();
+	string getErrorMessage();
 };
 
 #endif

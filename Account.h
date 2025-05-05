@@ -1,3 +1,4 @@
+#pragma once
 #ifndef ACCOUNT
 #define ACCOUNT
 
@@ -5,33 +6,36 @@
 #include <string>
 #include "Property.h"
 
+class Admin;
+
+using namespace std;
+
 enum class AccountType {
-	AdminAccount,
-	UserAccount
+    AdminAccount,
+    UserAccount
 };
 
 class BaseAccount {
 public:
-	AccountType type;
-	std::string firstName, lastName;
-	std::string userHandle, password;
-	static void createAccount();
-	static void logIn(std::unordered_map<std::string, BaseAccount*>*);
-	BaseAccount(AccountType, std::string, std::string, std::string, std::string);
+    AccountType type;
+    string firstName, lastName;
+    string userHandle, password;
+    static void createAccount();
+    static void logIn(unordered_map<string, BaseAccount*>*);
+    BaseAccount(AccountType, string, string, string, string);
 };
 
 class AdminAccount : public BaseAccount {
 public:
-	// admin-specific code
-	bool authorization;
-	AdminAccount(std::string, std::string, std::string, std::string);
+    bool authorization;
+    AdminAccount(string, string, string, string);
 };
 
 class UserAccount : public BaseAccount {
 public:
-	void submitPropertyListing(std::unordered_map<PropertyType, std::unordered_map<PropertyLocation, PropertyListing[]>*>*);
-	void updateAccountInfo();
-	UserAccount(std::string, std::string, std::string, std::string);
+    void submitPropertyListing(Admin admin);
+    void updateAccountInfo();
+    UserAccount(string, string, string, string);
 };
 
 #endif

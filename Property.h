@@ -1,6 +1,6 @@
+#pragma once
 #ifndef PROPERTY
 #define PROPERTY
-
 #include <string>
 using namespace std;
 
@@ -25,7 +25,7 @@ public:
     PropertyLocation(int, const char*, const char*);
 };
 
-std::ostream& operator<<(std::ostream&, PropertyLocation&);
+ostream& operator<<(ostream&, PropertyLocation&);
 
 class PropertyListing {
 private:
@@ -36,8 +36,11 @@ private:
     PropertyLocation location;
     string name, features, userHandle;
 public:
+    PropertyListing();
     PropertyListing(string& name, PropertyLocation location, double price, double size, PropertyType type, string& features, string userHandle);
     void displayInfo();
+    PropertyListing createProperty();
+
     bool matchesFilters(string& loc, double minPrice, double maxPrice, PropertyType type);
     int getPropertyID();
     string getName();

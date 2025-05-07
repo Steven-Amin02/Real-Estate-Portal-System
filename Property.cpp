@@ -171,7 +171,7 @@ PropertyListing PropertyListing::createProperty() {
 
 }
 // Getters 
-int PropertyListing::getPropertyID() { return propertyID; }
+int PropertyListing::getPropertyID() const { return propertyID; }
 
 string PropertyListing::getName() { return name; }
 

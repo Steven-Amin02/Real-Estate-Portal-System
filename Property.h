@@ -36,13 +36,21 @@ private:
     PropertyLocation location;
     string name, features, userHandle;
 public:
+    
+     PropertyListing(const PropertyListing&) = default;
+     PropertyListing& operator=(const PropertyListing&) = default;
+    
+
     PropertyListing();
     PropertyListing(string& name, PropertyLocation location, double price, double size, PropertyType type, string& features, string userHandle);
     void displayInfo();
     PropertyListing createProperty();
 
-    bool matchesFilters(string& loc, double minPrice, double maxPrice, PropertyType type);
-    int getPropertyID();
+   // bool matchesFilters(string& loc, double minPrice, double maxPrice, PropertyType type);
+    
+
+
+    int getPropertyID() const;
     string getName();
     PropertyLocation getLocation();
     double getPrice();
@@ -50,6 +58,9 @@ public:
     PropertyType getType();
     string getFeatures();
     string getUserHandle();
+
+
+
     void setName(string& newName);
     void setLocation(PropertyLocation newLocation);
     void setPrice(double newPrice);

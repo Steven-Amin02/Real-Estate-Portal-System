@@ -1,4 +1,3 @@
-
 #include "Property.h"
 #include <iostream>
 
@@ -96,10 +95,10 @@ PropertyListing::PropertyListing(string& name, PropertyLocation location, double
 }
 //PropertyListing::PropertyListing(){}
 
-void PropertyListing::displayInfo() {
+void PropertyListing::displayInfo() const {
     cout << "Property ID: " << propertyID << "\n"
         << "Name: " << name << "\n"
-        << "Location: " << location << "\n"
+        << "Location: " << location.getCities << "\n"
         << "Price: $" << price << "\n"
         << "Size: " << size << " sqm\n"
         << "Type: " << propertyTypeToString(propertyType) << "\n"
@@ -173,15 +172,17 @@ PropertyListing PropertyListing::createProperty() {
 // Getters 
 int PropertyListing::getPropertyID() const { return propertyID; }
 
-string PropertyListing::getName() { return name; }
+string PropertyListing::getName() const { return name; }
 
-PropertyLocation PropertyListing::getLocation() { return location; }
+PropertyLocation PropertyListing::getLocation() const { return location; }
 
-double PropertyListing::getPrice() { return price; }
+double PropertyListing::getPrice() const { return price; }
 
-double PropertyListing::getSize() { return size; }
+double PropertyListing::getSize() const { return size; }
 
-PropertyType PropertyListing::getType() { return propertyType; }
+PropertyType PropertyListing::getType() const { return propertyType; }
+
+int PropertyListing::getBedrooms() const {return bedrooms;}
 
 string PropertyListing::getFeatures() { return features; }
 
@@ -191,7 +192,7 @@ void PropertyListing::setName(string& newName) { name = newName; }
 
 void PropertyListing::setLocation(PropertyLocation newLocation) { location = newLocation; }
 
-void PropertyListing::setPrice(double newPrice) {
+void PropertyListing::setPrice(double newPrice)  {
     if (newPrice < 0 || newPrice > 100000000) {
         throw invalid_argument("Price must be between 0 and 1,000,000,00.");
     }
@@ -200,5 +201,7 @@ void PropertyListing::setPrice(double newPrice) {
 void PropertyListing::setSize(double newSize) { size = newSize; }
 
 void PropertyListing::setType(PropertyType newType) { propertyType = newType; }
+
+void PropertyListing::setBedrooms(int newBedromms) { bedrooms = newBedromms; }
 
 void PropertyListing::setFeatures(string& newFeatures) { features = newFeatures; }

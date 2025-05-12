@@ -1,0 +1,2 @@
+1,Test,New cairo,Apartment,500000,2 bedrooms&#44; 2 bathrooms,ahmed,0,1
+2,Test 2,New cairo,Flat,10000,3 bedrooms&#44; 1 bathroom,ahmed,1,1

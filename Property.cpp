@@ -194,7 +194,7 @@ void PropertyListing::setLocation(PropertyLocation newLocation) { location = new
 
 void PropertyListing::setPrice(double newPrice)  {
     if (newPrice < 0 || newPrice > 100000000) {
-        throw invalid_argument("Price must be between 0 and 1,000,000,00.");
+        throw invalid_argument("Price must be between 0 and 1,000,000,000.");
     }
     price = newPrice;
 }

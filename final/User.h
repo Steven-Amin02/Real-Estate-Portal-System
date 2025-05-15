@@ -12,6 +12,8 @@ public:
 	std::string getUsername() const;
 	std::string getPassword() const;
 	std::string getName() const;
-	bool checkPassword(const std::string& pwd) const;
-	virtual void displayMenu() = 0;
+	bool checkPassword(const std::string &pwd) const;
+	virtual void displayMenu(int totalUsers = 0, int totalProps = 0, int pendingProps = 0, int approvedProps = 0, int highlightedProps = 0) = 0;
+	virtual void setName(const std::string &newName);
+	virtual void setPassword(const std::string &newPassword);
 };

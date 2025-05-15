@@ -10,9 +10,9 @@
 class RealEstatePortal
 {
 private:
-    std::unordered_map<std::string, User*> users;
+    std::unordered_map<std::string, User *> users;
     std::unordered_map<int, Property> properties;
-    User* currentUser;
+    User *currentUser;
     int nextPropertyId;
 
 public:
@@ -30,4 +30,5 @@ public:
     void viewMyListings();
     void adminManageListings();
     void adminManageUsers();
+    void manageProfile();
 };

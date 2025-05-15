@@ -7,21 +7,8 @@
 #include <sstream>
 #include <sys/stat.h>
 #include <sys/types.h>
-#include <direct.h>  // For mkdir on Windows
 #include <iomanip>
-
-// Helper to format price with commas and 1 decimal
-std::string formatPrice(double price)
-{
-    std::stringstream ss;
-    ss << std::fixed << std::setprecision(1) << price;
-    std::string s = ss.str();
-    size_t dot = s.find('.');
-    size_t start = (s[0] == '-') ? 1 : 0;
-    for (size_t i = dot - 3; i > start; i -= 3)
-        s.insert(i, ",");
-    return s;
-}
+using namespace std;
 
 RealEstatePortal::RealEstatePortal() : currentUser(nullptr), nextPropertyId(1)
 {
@@ -31,7 +18,7 @@ RealEstatePortal::RealEstatePortal() : currentUser(nullptr), nextPropertyId(1)
 RealEstatePortal::~RealEstatePortal()
 {
     saveData();
-    for (const auto& pair : users)
+    for (const auto &pair : users)
         delete pair.second;
 }
 
@@ -42,9 +29,9 @@ void RealEstatePortal::run()
     {
         if (!currentUser)
         {
-            std::cout << "\n--- Real Estate Portal ---\n";
-            std::cout << "1. Register\n2. Login\n3. Exit\nChoice: ";
-            std::cin >> choice;
+            cout << "\n--- Real Estate Portal ---\n";
+            cout << "1. Register\n2. Login\n3. Exit\nChoice: ";
+            cin >> choice;
             if (choice == 1)
                 registerUser();
             else if (choice == 2)
@@ -52,14 +39,32 @@ void RealEstatePortal::run()
             else if (choice == 3)
                 break;
             else
-                std::cout << "Invalid choice.\n";
+                cout << "Invalid choice.\n";
         }
         else
         {
-            currentUser->displayMenu();
-            std::cout << "Choice: ";
-            std::cin >> choice;
-            if (dynamic_cast<Admin*>(currentUser))
+            // Calculate statistics
+            int totalUsers = users.size();
+            int totalProps = properties.size();
+            int pendingProps = 0;
+            int approvedProps = 0;
+            int highlightedProps = 0;
+
+            for (const auto &pair : properties)
+            {
+                if (!pair.second.isApproved())
+                    pendingProps++;
+                if (pair.second.isApproved())
+                    approvedProps++;
+                if (pair.second.isHighlighted())
+                    highlightedProps++;
+            }
+
+            currentUser->displayMenu(totalUsers, totalProps, pendingProps, approvedProps, highlightedProps);
+            cout << "Choice: ";
+            cin >> choice;
+
+            if (dynamic_cast<Admin *>(currentUser))
             {
                 if (choice == 1)
                     adminManageListings();
@@ -70,7 +75,7 @@ void RealEstatePortal::run()
                 else if (choice == 4)
                     logoutUser();
                 else
-                    std::cout << "Invalid choice.\n";
+                    cout << "Invalid choice.\n";
             }
             else
             {
@@ -83,80 +88,82 @@ void RealEstatePortal::run()
                 else if (choice == 4)
                     viewMyListings();
                 else if (choice == 5)
+                    manageProfile();
+                else if (choice == 6)
                     logoutUser();
                 else
-                    std::cout << "Invalid choice.\n";
+                    cout << "Invalid choice.\n";
             }
         }
-        std::cin.clear();
-        std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+        cin.clear();
+        cin.ignore(numeric_limits<streamsize>::max(), '\n');
     }
 }
 
 void RealEstatePortal::registerUser()
 {
-    std::string uname, pwd, name;
-    std::cout << "Enter username: ";
-    std::cin >> uname;
+    string uname, pwd, name;
+    cout << "Enter username: ";
+    cin >> uname;
 
     if (users.find(uname) != users.end())
     {
-        std::cout << "Username already exists.\n";
+        cout << "Username already exists.\n";
         return;
     }
 
-    std::cout << "Enter password: ";
-    std::cin >> pwd;
-    std::cout << "Enter your name: ";
-    std::cin.ignore();
-    std::getline(std::cin, name);
+    cout << "Enter password: ";
+    cin >> pwd;
+    cout << "Enter your name: ";
+    cin.ignore();
+    getline(cin, name);
 
-    User* newUser = new RegularUser(uname, pwd, name);
+    User *newUser = new RegularUser(uname, pwd, name);
     users[uname] = newUser;
-    std::cout << "Registration successful!\n";
+    cout << "Registration successful!\n";
 }
 
 void RealEstatePortal::loginUser()
 {
-    std::string uname, pwd;
-    std::cout << "Enter username: ";
-    std::cin >> uname;
-    std::cout << "Enter password: ";
-    std::cin >> pwd;
+    string uname, pwd;
+    cout << "Enter username: ";
+    cin >> uname;
+    cout << "Enter password: ";
+    cin >> pwd;
 
     auto it = users.find(uname);
     if (it != users.end() && it->second->checkPassword(pwd))
     {
         currentUser = it->second;
-        std::cout << "Login successful!\n";
+        cout << "Login successful!\n";
         return;
     }
-    std::cout << "Invalid username or password.\n";
+    cout << "Invalid username or password.\n";
 }
 
 void RealEstatePortal::logoutUser()
 {
     currentUser = nullptr;
-    std::cout << "Logged out.\n";
+    cout << "Logged out.\n";
 }
 
 // Helper functions for escaping/unescaping commas in features
-static std::string escapeCommas(const std::string& s)
+static string escapeCommas(const string &s)
 {
-    std::string out = s;
+    string out = s;
     size_t pos = 0;
-    while ((pos = out.find(',', pos)) != std::string::npos)
+    while ((pos = out.find(',', pos)) != string::npos)
     {
         out.replace(pos, 1, "&#44;");
         pos += 5;
     }
     return out;
 }
-static std::string unescapeCommas(const std::string& s)
+static string unescapeCommas(const string &s)
 {
-    std::string out = s;
+    string out = s;
     size_t pos = 0;
-    while ((pos = out.find("&#44;", pos)) != std::string::npos)
+    while ((pos = out.find("&#44;", pos)) != string::npos)
     {
         out.replace(pos, 5, ",");
         pos += 1;
@@ -167,29 +174,28 @@ static std::string unescapeCommas(const std::string& s)
 void RealEstatePortal::saveData()
 {
     // Save users
-    _mkdir("data");  // Windows-style directory creation
-    std::ofstream userFile("data/users.txt");
-    for (const auto& pair : users)
+    ofstream userFile("data/users.txt");
+    for (const auto &pair : users)
     {
-        User* u = pair.second;
-        std::string type = dynamic_cast<Admin*>(u) ? "admin" : "user";
+        User *u = pair.second;
+        string type = dynamic_cast<Admin *>(u) ? "admin" : "user";
         userFile << type << ',' << u->getUsername() << ',' << u->getPassword() << ',' << u->getName() << '\n';
     }
     userFile.close();
 
     // Save properties
-    std::ofstream propFile("data/properties.txt");
-    for (const auto& pair : properties)
+    ofstream propFile("data/properties.txt");
+    for (const auto &pair : properties)
     {
-        const Property& p = pair.second;
+        const Property &p = pair.second;
         propFile << p.getId() << ','
-            << escapeCommas(p.getName()) << ','
-            << escapeCommas(p.getLocation()) << ','
-            << escapeCommas(p.getType()) << ','
-            << p.getPrice() << ','
-            << escapeCommas(p.getFeatures()) << ','
-            << p.getOwnerUsername() << ','
-            << p.isHighlighted() << ',' << p.isApproved() << '\n';
+                 << escapeCommas(p.getName()) << ','
+                 << escapeCommas(p.getLocation()) << ','
+                 << escapeCommas(p.getType()) << ','
+                 << p.getPrice() << ','
+                 << escapeCommas(p.getFeatures()) << ','
+                 << p.getOwnerUsername() << ','
+                 << p.isHighlighted() << ',' << p.isApproved() << '\n';
     }
     propFile.close();
 }
@@ -197,27 +203,27 @@ void RealEstatePortal::saveData()
 void RealEstatePortal::loadData()
 {
     // Clear existing users
-    for (const auto& pair : users)
+    for (const auto &pair : users)
     {
         delete pair.second;
     }
     users.clear();
     properties.clear();
 
-    std::ifstream userFile("data/users.txt");
+    ifstream userFile("data/users.txt");
     if (userFile)
     {
-        std::string line;
-        while (std::getline(userFile, line))
+        string line;
+        while (getline(userFile, line))
         {
-            std::stringstream ss(line);
-            std::string type, uname, pwd, name;
-            std::getline(ss, type, ',');
-            std::getline(ss, uname, ',');
-            std::getline(ss, pwd, ',');
-            std::getline(ss, name, ',');
+            stringstream ss(line);
+            string type, uname, pwd, name;
+            getline(ss, type, ',');
+            getline(ss, uname, ',');
+            getline(ss, pwd, ',');
+            getline(ss, name, ',');
 
-            User* user;
+            User *user;
             if (type == "admin")
             {
                 user = new Admin(uname, pwd, name);
@@ -230,31 +236,31 @@ void RealEstatePortal::loadData()
         }
         userFile.close();
     }
-    std::ifstream propFile("data/properties.txt");
+    ifstream propFile("data/properties.txt");
     if (propFile)
     {
-        std::string line;
-        while (std::getline(propFile, line))
+        string line;
+        while (getline(propFile, line))
         {
-            std::stringstream ss(line);
+            stringstream ss(line);
             int id;
-            std::string name, location, type, priceStr, features, owner, highlightStr, approveStr;
+            string name, location, type, priceStr, features, owner, highlightStr, approveStr;
             double price;
-            std::getline(ss, priceStr, ',');
-            id = std::stoi(priceStr);
-            std::getline(ss, name, ',');
+            getline(ss, priceStr, ',');
+            id = stoi(priceStr);
+            getline(ss, name, ',');
             name = unescapeCommas(name);
-            std::getline(ss, location, ',');
+            getline(ss, location, ',');
             location = unescapeCommas(location);
-            std::getline(ss, type, ',');
+            getline(ss, type, ',');
             type = unescapeCommas(type);
-            std::getline(ss, priceStr, ',');
-            price = std::stod(priceStr);
-            std::getline(ss, features, ',');
+            getline(ss, priceStr, ',');
+            price = stod(priceStr);
+            getline(ss, features, ',');
             features = unescapeCommas(features);
-            std::getline(ss, owner, ',');
-            std::getline(ss, highlightStr, ',');
-            std::getline(ss, approveStr, ',');
+            getline(ss, owner, ',');
+            getline(ss, highlightStr, ',');
+            getline(ss, approveStr, ',');
             bool highlight = (highlightStr == "1" || highlightStr == "true");
             bool approve = (approveStr == "1" || approveStr == "true");
             properties[id] = Property(id, name, location, type, price, features, owner, highlight, approve);
@@ -267,36 +273,36 @@ void RealEstatePortal::loadData()
 
 void RealEstatePortal::addProperty()
 {
-    std::string name, location, type, features;
+    string name, location, type, features;
     double price;
-    std::cin.ignore();
-    std::cout << "Enter property name: ";
-    std::getline(std::cin, name);
-    std::cout << "Enter location: ";
-    std::getline(std::cin, location);
-    std::cout << "Enter type: ";
-    std::getline(std::cin, type);
-    std::cout << "Enter price: ";
-    std::cin >> price;
+    cin.ignore();
+    cout << "Enter property name: ";
+    getline(cin, name);
+    cout << "Enter location: ";
+    getline(cin, location);
+    cout << "Enter type: ";
+    getline(cin, type);
+    cout << "Enter price: ";
+    cin >> price;
 
-    std::cout << "Enter features: ";
-    std::cin.ignore();
-    std::getline(std::cin, features);
+    cout << "Enter features: ";
+    cin.ignore();
+    getline(cin, features);
 
-    std::string owner = currentUser ? currentUser->getUsername() : "unknown";
+    string owner = currentUser ? currentUser->getUsername() : "unknown";
     properties[nextPropertyId] = Property(nextPropertyId, name, location, type, price, features, owner, false, false);
     nextPropertyId++;
-    std::cout << "Property listed successfully! Awaiting admin approval.\n";
+    cout << "Property listed successfully! Awaiting admin approval.\n";
 }
 
 void RealEstatePortal::compareProperties()
 {
-    std::vector<const Property*> propsToCompare;
+    vector<const Property *> propsToCompare;
     int id, count = 0;
-    std::cout << "Enter up to 4 property IDs to compare (0 to stop): ";
+    cout << "Enter up to 4 property IDs to compare (0 to stop): ";
     while (count < 4)
     {
-        std::cin >> id;
+        cin >> id;
         if (id == 0)
             break;
         auto it = properties.find(id);
@@ -307,183 +313,191 @@ void RealEstatePortal::compareProperties()
         }
         else
         {
-            std::cout << "Property ID " << id << " not found or not approved. Try another.\n";
+            cout << "Property ID " << id << " not found or not approved. Try another.\n";
         }
     }
 
     if (propsToCompare.empty())
     {
-        std::cout << "No valid properties selected for comparison.\n";
+        cout << "No valid properties selected for comparison.\n";
         return;
     }
 
     // Find the maximum width needed for each field
     size_t maxNameLen = 4, maxLocLen = 8, maxTypeLen = 4, maxFeatLen = 8;
-    for (const auto* prop : propsToCompare)
+    for (const auto *prop : propsToCompare)
     {
-        maxNameLen = std::max(maxNameLen, prop->getName().length());
-        maxLocLen = std::max(maxLocLen, prop->getLocation().length());
-        maxTypeLen = std::max(maxTypeLen, prop->getType().length());
-        maxFeatLen = std::max(maxFeatLen, prop->getFeatures().length());
+        maxNameLen = max(maxNameLen, prop->getName().length());
+        maxLocLen = max(maxLocLen, prop->getLocation().length());
+        maxTypeLen = max(maxTypeLen, prop->getType().length());
+        maxFeatLen = max(maxFeatLen, prop->getFeatures().length());
     }
 
     // Print header
-    std::cout << "\n=== Property Comparison ===\n\n";
-    std::cout << std::setw(15) << "Property ID";
-    for (const auto* prop : propsToCompare)
+    cout << "\n=== Property Comparison ===\n\n";
+    cout << setw(15) << "Property ID";
+    for (const auto *prop : propsToCompare)
     {
-        std::cout << " | " << std::setw(5) << prop->getId();
+        cout << " | " << setw(5) << prop->getId();
     }
-    std::cout << "\n" << std::string(15 + propsToCompare.size() * 8, '-') << "\n";
+    cout << "\n"
+         << string(15 + propsToCompare.size() * 8, '-') << "\n";
 
     // Print details
-    std::cout << std::setw(15) << "Name";
-    for (const auto* prop : propsToCompare)
+    cout << setw(15) << "Name";
+    for (const auto *prop : propsToCompare)
     {
-        std::cout << " | " << std::setw(5) << prop->getName();
+        cout << " | " << setw(5) << prop->getName();
     }
-    std::cout << '\n';
+    cout << '\n';
 
-    std::cout << std::setw(15) << "Location";
-    for (const auto* prop : propsToCompare)
+    cout << setw(15) << "Location";
+    for (const auto *prop : propsToCompare)
     {
-        std::cout << " | " << std::setw(5) << prop->getLocation();
+        cout << " | " << setw(5) << prop->getLocation();
     }
-    std::cout << '\n';
+    cout << '\n';
 
-    std::cout << std::setw(15) << "Type";
-    for (const auto* prop : propsToCompare)
+    cout << setw(15) << "Type";
+    for (const auto *prop : propsToCompare)
     {
-        std::cout << " | " << std::setw(5) << prop->getType();
+        cout << " | " << setw(5) << prop->getType();
     }
-    std::cout << '\n';
+    cout << '\n';
 
-    std::cout << std::setw(15) << "Price";
-    for (const auto* prop : propsToCompare)
+    cout << setw(15) << "Price";
+    for (const auto *prop : propsToCompare)
     {
-        std::cout << " | $" << std::setw(4) << formatPrice(prop->getPrice());
+        cout << " | $" << fixed << setprecision(1) << prop->getPrice();
     }
-    std::cout << '\n';
+    cout << '\n';
 
-    std::cout << std::setw(15) << "Features";
-    for (const auto* prop : propsToCompare)
+    cout << setw(15) << "Features";
+    for (const auto *prop : propsToCompare)
     {
-        std::cout << " | " << std::setw(5) << prop->getFeatures();
+        cout << " | " << setw(5) << prop->getFeatures();
     }
-    std::cout << '\n';
+    cout << '\n';
 
-    std::cout << std::setw(15) << "Highlighted";
-    for (const auto* prop : propsToCompare)
+    cout << setw(15) << "Highlighted";
+    for (const auto *prop : propsToCompare)
     {
-        std::cout << " | " << std::setw(5) << (prop->isHighlighted() ? "Yes" : "No");
+        cout << " | " << setw(5) << (prop->isHighlighted() ? "Yes" : "No");
     }
-    std::cout << "\n\n";
+    cout << "\n\n";
 }
 
 void RealEstatePortal::adminManageListings()
 {
     int choice;
-    std::cout << "\n+==================== Admin Listing Management ====================+\n";
-    std::cout << "|                      Current Properties                          |\n";
-    std::cout << "+-------+-----------------------------------+------------+---------+\n";
-    std::cout << "| ID    |           Property Name           |   Status   | Feature |\n";
-    std::cout << "+-------+-----------------------------------+------------+---------+\n";
+    cout << "\n+==================== Admin Listing Management ====================+\n";
+    cout << "|                      Current Properties                          |\n";
+    cout << "+-------+-----------------------------------+------------+---------+\n";
+    cout << "| ID    |           Property Name           |   Status   | Feature |\n";
+    cout << "+-------+-----------------------------------+------------+---------+\n";
 
     // Calculate maximum lengths for formatting
-    size_t maxNameLen = 35;  // We'll truncate names longer than this
+    size_t maxNameLen = 35; // We'll truncate names longer than this
 
-    for (const auto& pair : properties)
+    for (const auto &pair : properties)
     {
-        const Property& p = pair.second;
-        std::string name = p.getName();
-        if (name.length() > maxNameLen - 3) {
+        const Property &p = pair.second;
+        string name = p.getName();
+        if (name.length() > maxNameLen - 3)
+        {
             name = name.substr(0, maxNameLen - 3) + "...";
         }
-        else {
+        else
+        {
             name.append(maxNameLen - name.length(), ' ');
         }
 
-        std::cout << "| " << std::setw(5) << p.getId() << " | "
-            << name << " | "
-            << std::setw(10) << (p.isApproved() ? "Approved" : "Pending") << " | "
-            << std::setw(7) << (p.isHighlighted() ? "*Yes" : "No") << " |\n";
+        cout << "| " << setw(5) << p.getId() << " | "
+             << name << " | "
+             << setw(10) << (p.isApproved() ? "Approved" : "Pending") << " | "
+             << setw(7) << (p.isHighlighted() ? "*Yes" : "No") << " |\n";
     }
 
-    std::cout << "+-------+-----------------------------------+------------+---------+\n\n";
-    std::cout << "Management Options:\n";
-    std::cout << "+----------------------------------+\n";
-    std::cout << "| 1. Remove Property               |\n";
-    std::cout << "| 2. Toggle Property Highlight     |\n";
-    std::cout << "| 3. Approve Property             |\n";
-    std::cout << "| 4. Back to Main Menu            |\n";
-    std::cout << "+----------------------------------+\n";
-    std::cout << "Enter your choice: ";
-    std::cin >> choice;
+    cout << "+-------+-----------------------------------+------------+---------+\n\n";
+    cout << "Management Options:\n";
+    cout << "+----------------------------------+\n";
+    cout << "| 1. Remove Property               |\n";
+    cout << "| 2. Toggle Property Highlight     |\n";
+    cout << "| 3. Approve Property             |\n";
+    cout << "| 4. Back to Main Menu            |\n";
+    cout << "+----------------------------------+\n";
+    cout << "Enter your choice: ";
+    cin >> choice;
 
     if (choice == 1)
     {
         int id;
-        std::cout << "\nEnter property ID to remove: ";
-        std::cin >> id;
+        cout << "\nEnter property ID to remove: ";
+        cin >> id;
         if (properties.erase(id) > 0)
         {
-            std::cout << "(+) Property successfully removed.\n";
+            cout << "(+) Property successfully removed.\n";
         }
         else
         {
-            std::cout << "(-) Property not found.\n";
+            cout << "(-) Property not found.\n";
         }
     }
     else if (choice == 2)
     {
         int id;
-        std::cout << "\nEnter property ID to toggle highlight status: ";
-        std::cin >> id;
+        cout << "\nEnter property ID to toggle highlight status: ";
+        cin >> id;
         auto it = properties.find(id);
         if (it != properties.end())
         {
             it->second.setHighlighted(!it->second.isHighlighted());
-            std::cout << "(+) Property highlight status "
-                << (it->second.isHighlighted() ? "enabled" : "disabled") << ".\n";
+            cout << "(+) Property highlight status "
+                 << (it->second.isHighlighted() ? "enabled" : "disabled") << ".\n";
         }
         else
         {
-            std::cout << "(-) Property not found.\n";
+            cout << "(-) Property not found.\n";
         }
     }
     else if (choice == 3)
     {
         // Check if all properties are already approved
         bool allApproved = true;
-        for (const auto& pair : properties) {
-            if (!pair.second.isApproved()) {
+        for (const auto &pair : properties)
+        {
+            if (!pair.second.isApproved())
+            {
                 allApproved = false;
                 break;
             }
         }
 
-        if (allApproved) {
-            std::cout << "\n(-) All properties are already approved.\n";
+        if (allApproved)
+        {
+            cout << "\n(-) All properties are already approved.\n";
             return;
         }
 
         int id;
-        std::cout << "\nEnter property ID to approve: ";
-        std::cin >> id;
+        cout << "\nEnter property ID to approve: ";
+        cin >> id;
         auto it = properties.find(id);
         if (it != properties.end())
         {
-            if (it->second.isApproved()) {
-                std::cout << "(-) This property is already approved.\n";
+            if (it->second.isApproved())
+            {
+                cout << "(-) This property is already approved.\n";
             }
-            else {
+            else
+            {
                 it->second.setApproved(true);
-                std::cout << "(+) Property approved successfully.\n";
+                cout << "(+) Property approved successfully.\n";
             }
         }
         else
         {
-            std::cout << "(-) Property not found.\n";
+            cout << "(-) Property not found.\n";
         }
     }
 }
@@ -491,72 +505,74 @@ void RealEstatePortal::adminManageListings()
 void RealEstatePortal::adminManageUsers()
 {
     int choice;
-    std::cout << "\n--- Admin User Management ---\n";
-    std::cout << "Current Users:\n";
-    for (const auto& pair : users)
+    cout << "\n--- Admin User Management ---\n";
+    cout << "Current Users:\n";
+    for (const auto &pair : users)
     {
-        const User* u = pair.second;
-        std::string type = dynamic_cast<const Admin*>(u) ? "Admin" : "User";
-        std::cout << "Username: " << u->getUsername() << " | Name: " << u->getName() << " | Type: " << type << std::endl;
+        const User *u = pair.second;
+        string type = dynamic_cast<const Admin *>(u) ? "Admin" : "User";
+        cout << "Username: " << u->getUsername() << " | Name: " << u->getName() << " | Type: " << type << endl;
     }
-    std::cout << "1. Remove User\n2. Back\nChoice: ";
-    std::cin >> choice;
+    cout << "1. Remove User\n2. Back\nChoice: ";
+    cin >> choice;
     if (choice == 1)
     {
-        std::string uname;
-        std::cout << "Enter username to remove: ";
-        std::cin >> uname;
+        string uname;
+        cout << "Enter username to remove: ";
+        cin >> uname;
         auto it = users.find(uname);
         if (it != users.end())
         {
             delete it->second;
             users.erase(it);
-            std::cout << "User removed.\n";
+            cout << "User removed.\n";
         }
         else
         {
-            std::cout << "User not found.\n";
+            cout << "User not found.\n";
         }
     }
 }
 
 void RealEstatePortal::searchProperties()
 {
-    std::string location, type;
+    string location, type;
     double minPrice = 0, maxPrice = 1e9;
 
     // Clear input buffer before getting location
-    std::cin.clear();
-    std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+    cin.clear();
+    cin.ignore(numeric_limits<streamsize>::max(), '\n');
 
-    std::cout << "Enter location to search (or leave empty): ";
-    std::getline(std::cin, location);
-    std::cout << "Enter type to search (or leave empty): ";
-    std::getline(std::cin, type);
+    cout << "Enter location to search (or leave empty): ";
+    getline(cin, location);
+    cout << "Enter type to search (or leave empty): ";
+    getline(cin, type);
 
-    std::cout << "Enter min price (or 0): ";
-    std::cin >> minPrice;
-    if (std::cin.fail()) {
-        std::cin.clear();
-        std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+    cout << "Enter min price (or 0): ";
+    cin >> minPrice;
+    if (cin.fail())
+    {
+        cin.clear();
+        cin.ignore(numeric_limits<streamsize>::max(), '\n');
         minPrice = 0;
     }
 
-    std::cout << "Enter max price (or 0 for no max): ";
-    std::cin >> maxPrice;
-    if (std::cin.fail()) {
-        std::cin.clear();
-        std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+    cout << "Enter max price (or 0 for no max): ";
+    cin >> maxPrice;
+    if (cin.fail())
+    {
+        cin.clear();
+        cin.ignore(numeric_limits<streamsize>::max(), '\n');
         maxPrice = 0;
     }
 
     if (maxPrice == 0)
         maxPrice = 1e9;
 
-    std::vector<const Property*> filteredProps;
-    for (const auto& pair : properties)
+    vector<const Property *> filteredProps;
+    for (const auto &pair : properties)
     {
-        const Property& p = pair.second;
+        const Property &p = pair.second;
         if (!p.isApproved())
             continue;
         if ((!location.empty() && p.getLocation() != location) ||
@@ -568,31 +584,104 @@ void RealEstatePortal::searchProperties()
         filteredProps.push_back(&p);
     }
 
-    std::cout << "\n--- Search Results ---\n";
-    for (const auto* p : filteredProps)
+    cout << "\n--- Search Results ---\n";
+    for (const auto *p : filteredProps)
     {
-        p->display();
+        cout << "ID: " << p->getId() << " | Name: " << p->getName()
+             << " | Location: " << p->getLocation()
+             << " | Type: " << p->getType()
+             << " | Price: $" << fixed << setprecision(1) << p->getPrice()
+             << " | Features: " << p->getFeatures()
+             << " | Owner: " << p->getOwnerUsername()
+             << " | Highlighted: " << (p->isHighlighted() ? "Yes" : "No") << endl;
     }
 }
 
 void RealEstatePortal::viewMyListings()
 {
-    std::cout << "\n--- My Listings ---\n";
-    std::string myUser = currentUser ? currentUser->getUsername() : "";
+    cout << "\n--- My Listings ---\n";
+    string myUser = currentUser ? currentUser->getUsername() : "";
 
-    std::vector<const Property*> myProps;
-    for (const auto& pair : properties)
+    vector<const Property *> myProps;
+    for (const auto &pair : properties)
     {
-        const Property& p = pair.second;
+        const Property &p = pair.second;
         if (p.getOwnerUsername() == myUser)
         {
             myProps.push_back(&p);
         }
     }
 
-    for (const auto* p : myProps)
+    for (const auto *p : myProps)
     {
         p->display();
-        std::cout << "    Status: " << (p->isApproved() ? "Approved" : "Pending Approval") << std::endl;
+        cout << "    Status: " << (p->isApproved() ? "Approved" : "Pending Approval") << endl;
+    }
+}
+
+void RealEstatePortal::manageProfile()
+{
+    int choice;
+    string newName, newPassword, currentPassword;
+
+    while (true)
+    {
+        cout << "\n=== Profile Management ===\n";
+        cout << "Current Profile:\n";
+        cout << "Username: " << currentUser->getUsername() << "\n";
+        cout << "Name: " << currentUser->getName() << "\n";
+        cout << "\nOptions:\n";
+        cout << "1. Change Name\n";
+        cout << "2. Change Password\n";
+        cout << "3. Back to Main Menu\n";
+        cout << "Choice: ";
+        cin >> choice;
+        cin.ignore(numeric_limits<streamsize>::max(), '\n');
+
+        if (choice == 1)
+        {
+            cout << "Enter new name: ";
+            getline(cin, newName);
+            if (!newName.empty())
+            {
+                currentUser->setName(newName);
+                cout << "Name updated successfully!\n";
+            }
+            else
+            {
+                cout << "Name cannot be empty.\n";
+            }
+        }
+        else if (choice == 2)
+        {
+            cout << "Enter current password: ";
+            getline(cin, currentPassword);
+
+            if (!currentUser->checkPassword(currentPassword))
+            {
+                cout << "Current password is incorrect.\n";
+                continue;
+            }
+
+            cout << "Enter new password: ";
+            getline(cin, newPassword);
+
+            if (newPassword.empty())
+            {
+                cout << "Password cannot be empty.\n";
+                continue;
+            }
+
+            currentUser->setPassword(newPassword);
+            cout << "Password updated successfully!\n";
+        }
+        else if (choice == 3)
+        {
+            break;
+        }
+        else
+        {
+            cout << "Invalid choice.\n";
+        }
     }
 }

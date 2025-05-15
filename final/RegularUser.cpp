@@ -1,16 +1,20 @@
 #include "RegularUser.h"
 #include <iostream>
 
+using namespace std;
+
 RegularUser::RegularUser(std::string uname, std::string pwd, std::string n)
-    : User(uname, pwd, n) {
+    : User(uname, pwd, n)
+{
 }
 
-void RegularUser::displayMenu()
+void RegularUser::displayMenu(int totalUsers, int totalProps, int pendingProps, int approvedProps, int highlightedProps)
 {
-    std::cout << "\n--- User Menu ---\n";
-    std::cout << "1. List a Property\n";
-    std::cout << "2. Search Properties\n";
-    std::cout << "3. Compare Properties\n";
-    std::cout << "4. View My Listings\n";
-    std::cout << "5. Logout\n";
+    cout << "\n--- User Menu ---\n";
+    cout << "1. List a Property\n";
+    cout << "2. Search Properties\n";
+    cout << "3. Compare Properties\n";
+    cout << "4. View My Listings\n";
+    cout << "5. Manage Profile\n";
+    cout << "6. Logout\n";
 }

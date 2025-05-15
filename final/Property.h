@@ -6,6 +6,7 @@ class Property
 	int id;
 	std::string name, location, type;
 	double price;
+	double size; // Size in square feet
 	std::string features;
 	std::string ownerUsername;
 	bool highlighted = false;
@@ -13,13 +14,14 @@ class Property
 
 public:
 	// Default constructor
-	Property() : id(0), price(0.0) {}
+	Property() : id(0), price(0.0), size(0.0) {}
 
-	Property(int id, std::string n, std::string loc, std::string t, double p, std::string f, std::string owner, bool highlight = false, bool approve = false);
+	Property(int id, std::string n, std::string loc, std::string t, double p, double s, std::string f, std::string owner, bool highlight = false, bool approve = false);
 	void display() const;
 	int getId() const;
 	std::string getLocation() const;
 	double getPrice() const;
+	double getSize() const;
 	std::string getType() const;
 	std::string getName() const;
 	std::string getFeatures() const;

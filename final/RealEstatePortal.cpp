@@ -8,6 +8,7 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <iomanip>
+#include <map>
 using namespace std;
 
 RealEstatePortal::RealEstatePortal() : currentUser(nullptr), nextPropertyId(1)
@@ -69,10 +70,14 @@ void RealEstatePortal::run()
                 if (choice == 1)
                     adminManageListings();
                 else if (choice == 2)
-                    adminManageUsers();
+                    addProperty();
                 else if (choice == 3)
-                    searchProperties();
+                    adminManageUsers();
                 else if (choice == 4)
+                    searchProperties();
+                else if (choice == 5)
+                    editProperty();
+                else if (choice == 6)
                     logoutUser();
                 else
                     cout << "Invalid choice.\n";
@@ -88,8 +93,10 @@ void RealEstatePortal::run()
                 else if (choice == 4)
                     viewMyListings();
                 else if (choice == 5)
-                    manageProfile();
+                    editProperty();
                 else if (choice == 6)
+                    manageProfile();
+                else if (choice == 7)
                     logoutUser();
                 else
                     cout << "Invalid choice.\n";
@@ -193,6 +200,7 @@ void RealEstatePortal::saveData()
                  << escapeCommas(p.getLocation()) << ','
                  << escapeCommas(p.getType()) << ','
                  << p.getPrice() << ','
+                 << p.getSize() << ','
                  << escapeCommas(p.getFeatures()) << ','
                  << p.getOwnerUsername() << ','
                  << p.isHighlighted() << ',' << p.isApproved() << '\n';
@@ -244,8 +252,8 @@ void RealEstatePortal::loadData()
         {
             stringstream ss(line);
             int id;
-            string name, location, type, priceStr, features, owner, highlightStr, approveStr;
-            double price;
+            string name, location, type, priceStr, sizeStr, features, owner, highlightStr, approveStr;
+            double price, size;
             getline(ss, priceStr, ',');
             id = stoi(priceStr);
             getline(ss, name, ',');
@@ -256,6 +264,8 @@ void RealEstatePortal::loadData()
             type = unescapeCommas(type);
             getline(ss, priceStr, ',');
             price = stod(priceStr);
+            getline(ss, sizeStr, ',');
+            size = stod(sizeStr);
             getline(ss, features, ',');
             features = unescapeCommas(features);
             getline(ss, owner, ',');
@@ -263,7 +273,7 @@ void RealEstatePortal::loadData()
             getline(ss, approveStr, ',');
             bool highlight = (highlightStr == "1" || highlightStr == "true");
             bool approve = (approveStr == "1" || approveStr == "true");
-            properties[id] = Property(id, name, location, type, price, features, owner, highlight, approve);
+            properties[id] = Property(id, name, location, type, price, size, features, owner, highlight, approve);
             if (id >= nextPropertyId)
                 nextPropertyId = id + 1;
         }
@@ -274,7 +284,7 @@ void RealEstatePortal::loadData()
 void RealEstatePortal::addProperty()
 {
     string name, location, type, features;
-    double price;
+    double price, size;
     cin.ignore();
     cout << "Enter property name: ";
     getline(cin, name);
@@ -282,6 +292,8 @@ void RealEstatePortal::addProperty()
     getline(cin, location);
     cout << "Enter type: ";
     getline(cin, type);
+    cout << "Enter size (in square feet): ";
+    cin >> size;
     cout << "Enter price: ";
     cin >> price;
 
@@ -289,10 +301,23 @@ void RealEstatePortal::addProperty()
     cin.ignore();
     getline(cin, features);
 
-    string owner = currentUser ? currentUser->getUsername() : "unknown";
-    properties[nextPropertyId] = Property(nextPropertyId, name, location, type, price, features, owner, false, false);
+    std::string owner = currentUser ? currentUser->getUsername() : "unknown";
+
+    // Set isApproved to true if the current user is an admin
+    bool isAdmin = (dynamic_cast<Admin *>(currentUser) != nullptr);
+    bool isApproved = isAdmin ? true : false;
+
+    properties[nextPropertyId] = Property(nextPropertyId, name, location, type, price, size, features, owner, false, isApproved);
     nextPropertyId++;
-    cout << "Property listed successfully! Awaiting admin approval.\n";
+
+    if (isAdmin)
+    {
+        std::cout << "Property added and automatically approved.\n";
+    }
+    else
+    {
+        std::cout << "Property listed successfully! Awaiting admin approval.\n";
+    }
 }
 
 void RealEstatePortal::compareProperties()
@@ -391,31 +416,10 @@ void RealEstatePortal::adminManageListings()
 {
     int choice;
     cout << "\n+==================== Admin Listing Management ====================+\n";
-    cout << "|                      Current Properties                          |\n";
-    cout << "+-------+-----------------------------------+------------+---------+\n";
-    cout << "| ID    |           Property Name           |   Status   | Feature |\n";
-    cout << "+-------+-----------------------------------+------------+---------+\n";
-
-    // Calculate maximum lengths for formatting
-    size_t maxNameLen = 35; // We'll truncate names longer than this
-
     for (const auto &pair : properties)
     {
         const Property &p = pair.second;
-        string name = p.getName();
-        if (name.length() > maxNameLen - 3)
-        {
-            name = name.substr(0, maxNameLen - 3) + "...";
-        }
-        else
-        {
-            name.append(maxNameLen - name.length(), ' ');
-        }
-
-        cout << "| " << setw(5) << p.getId() << " | "
-             << name << " | "
-             << setw(10) << (p.isApproved() ? "Approved" : "Pending") << " | "
-             << setw(7) << (p.isHighlighted() ? "*Yes" : "No") << " |\n";
+        p.display();
     }
 
     cout << "+-------+-----------------------------------+------------+---------+\n\n";
@@ -538,6 +542,8 @@ void RealEstatePortal::searchProperties()
 {
     string location, type;
     double minPrice = 0, maxPrice = 1e9;
+    double minSize = 0, maxSize = 1e9;
+    int sortChoice;
 
     // Clear input buffer before getting location
     cin.clear();
@@ -547,6 +553,24 @@ void RealEstatePortal::searchProperties()
     getline(cin, location);
     cout << "Enter type to search (or leave empty): ";
     getline(cin, type);
+
+    cout << "Enter min size in sq ft (or 0): ";
+    cin >> minSize;
+    if (cin.fail())
+    {
+        cin.clear();
+        cin.ignore(numeric_limits<streamsize>::max(), '\n');
+        minSize = 0;
+    }
+
+    cout << "Enter max size in sq ft (or 0 for no max): ";
+    cin >> maxSize;
+    if (cin.fail())
+    {
+        cin.clear();
+        cin.ignore(numeric_limits<streamsize>::max(), '\n');
+        maxSize = 0;
+    }
 
     cout << "Enter min price (or 0): ";
     cin >> minPrice;
@@ -568,7 +592,23 @@ void RealEstatePortal::searchProperties()
 
     if (maxPrice == 0)
         maxPrice = 1e9;
+    if (maxSize == 0)
+        maxSize = 1e9;
 
+    cout << "\nSort by:\n";
+    cout << "1. Price (Low to High)\n";
+    cout << "2. Price (High to Low)\n";
+    cout << "3. Size (Small to Large)\n";
+    cout << "4. Size (Large to Small)\n";
+    cout << "5. Featured First (Default)\n";
+    cout << "Enter choice (1-5): ";
+    cin >> sortChoice;
+    if (sortChoice < 1 || sortChoice > 5)
+    {
+        sortChoice = 5; // Default to featured first
+    }
+
+    // First filter properties based on search criteria
     vector<const Property *> filteredProps;
     for (const auto &pair : properties)
     {
@@ -577,24 +617,73 @@ void RealEstatePortal::searchProperties()
             continue;
         if ((!location.empty() && p.getLocation() != location) ||
             (!type.empty() && p.getType() != type) ||
-            p.getPrice() < minPrice || p.getPrice() > maxPrice)
+            p.getPrice() < minPrice || p.getPrice() > maxPrice ||
+            p.getSize() < minSize || p.getSize() > maxSize)
         {
             continue;
         }
         filteredProps.push_back(&p);
     }
 
-    cout << "\n--- Search Results ---\n";
-    for (const auto *p : filteredProps)
+    // Sort based on user choice using multimap
+    multimap<double, const Property *> sortedProps; // For price/size sorting
+    multimap<bool, const Property *> featuredProps; // For featured sorting
+
+    if (sortChoice == 1) // Price Low to High
     {
-        cout << "ID: " << p->getId() << " | Name: " << p->getName()
-             << " | Location: " << p->getLocation()
-             << " | Type: " << p->getType()
-             << " | Price: $" << fixed << setprecision(1) << p->getPrice()
-             << " | Features: " << p->getFeatures()
-             << " | Owner: " << p->getOwnerUsername()
-             << " | Highlighted: " << (p->isHighlighted() ? "Yes" : "No") << endl;
+        for (const auto *p : filteredProps)
+        {
+            sortedProps.insert({p->getPrice(), p});
+        }
     }
+    else if (sortChoice == 2) // Price High to Low
+    {
+        for (const auto *p : filteredProps)
+        {
+            sortedProps.insert({-p->getPrice(), p}); // Negative price for reverse sorting
+        }
+    }
+    else if (sortChoice == 3) // Size Small to Large
+    {
+        for (const auto *p : filteredProps)
+        {
+            sortedProps.insert({p->getSize(), p});
+        }
+    }
+    else if (sortChoice == 4) // Size Large to Small
+    {
+        for (const auto *p : filteredProps)
+        {
+            sortedProps.insert({-p->getSize(), p}); // Negative size for reverse sorting
+        }
+    }
+    else // Featured First
+    {
+        for (const auto *p : filteredProps)
+        {
+            featuredProps.insert({!p->isHighlighted(), p}); // false comes before true
+        }
+    }
+
+    cout << "\n--- Search Results ---\n";
+    if (sortChoice >= 1 && sortChoice <= 4)
+    {
+        for (const auto &pair : sortedProps)
+        {
+            const Property *p = pair.second;
+            p->display();
+        }
+    }
+    else // Featured First
+    {
+        for (const auto &pair : featuredProps)
+        {
+            const Property *p = pair.second;
+            p->display();
+        }
+    }
+
+    cout << "\nFound " << filteredProps.size() << " properties matching your criteria.\n";
 }
 
 void RealEstatePortal::viewMyListings()
@@ -684,4 +773,153 @@ void RealEstatePortal::manageProfile()
             cout << "Invalid choice.\n";
         }
     }
+}
+
+void RealEstatePortal::editProperty()
+{
+    if (!currentUser)
+    {
+        cout << "Please login first.\n";
+        return;
+    }
+
+    bool isAdmin = dynamic_cast<Admin *>(currentUser) != nullptr;
+    string myUser = currentUser->getUsername();
+
+    // Display available properties
+    cout << "\n=== Available Properties for Editing ===\n";
+    cout << "+-------+-----------------------------------+------------+---------+\n";
+
+    bool hasProperties = false;
+
+    for (const auto &pair : properties)
+    {
+        const Property &p = pair.second;
+        // Skip if not admin and not owner
+        if (!isAdmin && p.getOwnerUsername() != myUser)
+            continue;
+
+        hasProperties = true;
+        p.display();
+    }
+
+    cout << "+-------+-----------------------------------+------------+---------+\n\n";
+
+    if (!hasProperties)
+    {
+        if (isAdmin)
+            cout << "No properties available in the system.\n";
+        else
+            cout << "You don't have any properties to edit.\n";
+        return;
+    }
+
+    int id;
+    cout << "Enter property ID to edit: ";
+    cin >> id;
+
+    auto it = properties.find(id);
+    if (it == properties.end())
+    {
+        cout << "Property not found.\n";
+        return;
+    }
+
+    Property &property = it->second;
+
+    // Check permissions (double check in case user entered an ID manually)
+    if (!isAdmin && property.getOwnerUsername() != myUser)
+    {
+        cout << "You can only edit your own properties.\n";
+        return;
+    }
+
+    // Display current property details
+    cout << "\nCurrent Property Details:\n";
+    property.display();
+    cout << "Status: " << (property.isApproved() ? "Approved" : "Pending Approval") << "\n\n";
+
+    // Get new details
+    string name, location, type, features;
+    double price;
+    cin.ignore();
+
+    cout << "Enter new name (or press Enter to keep current): ";
+    getline(cin, name);
+    if (!name.empty())
+    {
+        property = Property(property.getId(), name, property.getLocation(),
+                            property.getType(), property.getPrice(),
+                            property.getSize(), property.getFeatures(),
+                            property.getOwnerUsername(), property.isHighlighted(),
+                            property.isApproved());
+    }
+
+    cout << "Enter new location (or press Enter to keep current): ";
+    getline(cin, location);
+    if (!location.empty())
+    {
+        property = Property(property.getId(), property.getName(), location,
+                            property.getType(), property.getPrice(),
+                            property.getSize(), property.getFeatures(),
+                            property.getOwnerUsername(), property.isHighlighted(),
+                            property.isApproved());
+    }
+
+    cout << "Enter new type (or press Enter to keep current): ";
+    getline(cin, type);
+    if (!type.empty())
+    {
+        property = Property(property.getId(), property.getName(), property.getLocation(),
+                            type, property.getPrice(),
+                            property.getSize(), property.getFeatures(),
+                            property.getOwnerUsername(), property.isHighlighted(),
+                            property.isApproved());
+    }
+
+    cout << "Enter new price (or 0 to keep current): ";
+    cin >> price;
+    if (price > 0)
+    {
+        property = Property(property.getId(), property.getName(), property.getLocation(),
+                            type, price,
+                            property.getSize(), property.getFeatures(),
+                            property.getOwnerUsername(), property.isHighlighted(),
+                            property.isApproved());
+    }
+
+    cin.ignore();
+    cout << "Enter new features (or press Enter to keep current): ";
+    getline(cin, features);
+    if (!features.empty())
+    {
+        property = Property(property.getId(), property.getName(), property.getLocation(),
+                            type, property.getPrice(),
+                            property.getSize(), features,
+                            property.getOwnerUsername(), property.isHighlighted(),
+                            property.isApproved());
+    }
+
+    // If admin, allow changing approval status
+    if (isAdmin)
+    {
+        char choice;
+        cout << "Change approval status? (y/n): ";
+        cin >> choice;
+        if (choice == 'y' || choice == 'Y')
+        {
+            property.setApproved(!property.isApproved());
+        }
+    }
+    else
+    {
+        // For regular users, property needs to be re-approved after edit
+        property.setApproved(false);
+        cout << "Property updated and sent for admin approval.\n";
+    }
+
+    cout << "\nProperty updated successfully!\n";
+    cout << "Updated Property Details:\n";
+    property.display();
+    cout << "Status: " << (property.isApproved() ? "Approved" : "Pending Approval") << "\n";
 }

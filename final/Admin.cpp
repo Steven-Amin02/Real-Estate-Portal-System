@@ -28,7 +28,9 @@ void Admin::displayMenu(int totalUsers, int totalProps, int pendingProps, int ap
 
     cout << "Menu Options:\n";
     cout << "1. Manage Listings\n";
-    cout << "2. Manage Users\n";
-    cout << "3. View All Properties\n";
-    cout << "4. Logout\n";
+    cout << "2. Add a Property\n";
+    cout << "3. Manage Users\n";
+    cout << "4. View All Properties\n";
+    cout << "5. Edit Property\n";
+    cout << "6. Logout\n";
 }

@@ -31,4 +31,5 @@ public:
     void adminManageListings();
     void adminManageUsers();
     void manageProfile();
+    void editProperty();
 };

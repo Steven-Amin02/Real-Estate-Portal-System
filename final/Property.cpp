@@ -6,25 +6,26 @@
 // Helper to format price with commas and 1 decimal
 static std::string formatPrice(double price)
 {
-  std::stringstream ss;
-  ss << std::fixed << std::setprecision(1) << price;
-  std::string s = ss.str();
-  size_t dot = s.find('.');
-  int start = (s[0] == '-') ? 1 : 0;
-  for (int i = dot - 3; i > start; i -= 3)
-    s.insert(i, ",");
-  return s;
+    std::stringstream ss;
+    ss << std::fixed << std::setprecision(1) << price;
+    std::string s = ss.str();
+    size_t dot = s.find('.');
+    size_t start = (s[0] == '-') ? 1 : 0;
+    for (size_t i = dot - 3; i > start; i -= 3)
+        s.insert(i, ",");
+    return s;
 }
 
 Property::Property(int id, std::string n, std::string loc, std::string t, double p, std::string f, std::string owner, bool highlight, bool approve)
-    : id(id), name(n), location(loc), type(t), price(p), features(f), ownerUsername(owner), highlighted(highlight), approved(approve) {}
+    : id(id), name(n), location(loc), type(t), price(p), features(f), ownerUsername(owner), highlighted(highlight), approved(approve) {
+}
 
 void Property::display() const
 {
-  std::cout << (highlighted ? "* " : "  ");
-  std::cout << "ID: " << id << " | Name: " << name << " | Location: " << location
-            << " | Type: " << type << " | Price: $" << formatPrice(price) << " | Features: " << features
-            << " | Owner: " << ownerUsername << std::endl;
+    std::cout << (highlighted ? "* " : "  ");
+    std::cout << "ID: " << id << " | Name: " << name << " | Location: " << location
+        << " | Type: " << type << " | Price: $" << formatPrice(price) << " | Features: " << features
+        << " | Owner: " << ownerUsername << std::endl;
 }
 
 int Property::getId() const { return id; }

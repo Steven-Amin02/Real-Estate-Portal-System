@@ -10,28 +10,24 @@
 class RealEstatePortal
 {
 private:
-  std::unordered_map<std::string, User *> users;
-  std::vector<Property> properties;
-  User *currentUser;
-  int nextPropertyId;
-
-  // Helper function for property sorting
-  std::vector<const Property *> getSortedProperties(const std::vector<const Property *> &props,
-                                                    const std::string &sortBy) const;
+    std::unordered_map<std::string, User*> users;
+    std::unordered_map<int, Property> properties;
+    User* currentUser;
+    int nextPropertyId;
 
 public:
-  RealEstatePortal();
-  ~RealEstatePortal();
-  void run();
-  void registerUser();
-  void loginUser();
-  void logoutUser();
-  void saveData();
-  void loadData();
-  void addProperty();
-  void searchProperties(const std::string &sortBy = "highlight");
-  void compareProperties();
-  void viewMyListings(const std::string &sortBy = "highlight");
-  void adminManageListings();
-  void adminManageUsers();
+    RealEstatePortal();
+    ~RealEstatePortal();
+    void run();
+    void registerUser();
+    void loginUser();
+    void logoutUser();
+    void saveData();
+    void loadData();
+    void addProperty();
+    void searchProperties();
+    void compareProperties();
+    void viewMyListings();
+    void adminManageListings();
+    void adminManageUsers();
 };
